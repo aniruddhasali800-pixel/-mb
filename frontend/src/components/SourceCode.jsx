@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Code, Download, Eye, ArrowLeft, Search, Terminal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const SourceCode = () => {
     const navigate = useNavigate();
@@ -11,7 +12,7 @@ const SourceCode = () => {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        axios.get('http://localhost:5001/api/admin/contents')
+        axios.get(`${API_BASE_URL}/api/admin/contents`)
             .then(res => {
                 setProjects(res.data.filter(item => item.type === 'code'));
                 setLoading(false);
@@ -76,12 +77,12 @@ const SourceCode = () => {
                         <p style={{ fontSize: '0.8rem', marginBottom: '1.5rem' }}>Repository by <span style={{ color: '#fff' }}>{project.author || 'Admin'}</span></p>
                         
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <div className="hub-action" style={{ color: '#0ea5e9' }} onClick={() => window.open(`http://localhost:5001${project.fileUrl}`, '_blank')}>
+                            <div className="hub-action" style={{ color: '#0ea5e9' }} onClick={() => window.open(`${API_BASE_URL}${project.fileUrl}`, '_blank')}>
                                 <Eye size={16} /> View
                             </div>
                             <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = `http://localhost:5001${project.fileUrl}`;
+                                link.href = `${API_BASE_URL}${project.fileUrl}`;
                                 link.download = project.title || 'download';
                                 link.target = '_blank';
                                 link.click();

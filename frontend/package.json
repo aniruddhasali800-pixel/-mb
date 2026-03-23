@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.57.1",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.13.6",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",

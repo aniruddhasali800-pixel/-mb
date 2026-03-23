@@ -14,11 +14,6 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 PDFs Hub
-                {user && (
-                    <Link to="/admin-portal-xyz" style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }} title="Admin Dashboard">
-                        <Shield size={20} />
-                    </Link>
-                )}
             </div>
             <div className="nav-user" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                 <div className="nav-avatar">

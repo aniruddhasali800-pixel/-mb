@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Eye, FileText, Code, CheckCircle, AlertCircle, TrendingUp, UploadCloud } from 'lucide-react';
+import { UploadCloud, FileText, Code, Server, Shield, Activity, Users, FileDigit, Globe, Trash2, DollarSign, Eye, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const AdminPortal = () => {
     const [stats, setStats] = useState({ students: 0, views: 0, pdfCount: 0, codeCount: 0, traffic: 'Low' });
@@ -19,7 +20,7 @@ const AdminPortal = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await axios.get('http://localhost:5001/api/admin/analytics');
+            const res = await axios.get(`${API_BASE_URL}/api/admin/analytics`);
             setStats(res.data);
         } catch (error) {
             console.error('Failed to fetch analytics', error);
@@ -28,7 +29,7 @@ const AdminPortal = () => {
 
     const fetchContents = async () => {
         try {
-            const res = await axios.get('http://localhost:5001/api/admin/contents');
+            const res = await axios.get(`${API_BASE_URL}/api/admin/contents`);
             setContents(res.data);
         } catch (error) {
             console.error('Failed to fetch contents', error);
@@ -48,7 +49,7 @@ const AdminPortal = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this content?')) return;
         try {
-            await axios.delete(`http://localhost:5001/api/admin/content/${id}`);
+            await axios.delete(`${API_BASE_URL}/api/admin/content/${id}`);
             loadData();
         } catch (error) {
             alert('Failed to delete content');
@@ -64,7 +65,7 @@ const AdminPortal = () => {
         const isFree = isNaN(priceNum) || priceNum <= 0;
 
         try {
-            await axios.put(`http://localhost:5001/api/admin/content/${id}/price`, {
+            await axios.put(`${API_BASE_URL}/api/admin/content/${id}/price`, {
                 isFree,
                 price: isFree ? 0 : priceNum
             });
@@ -93,7 +94,7 @@ const AdminPortal = () => {
         formData.append('file', pdfFile);
 
         try {
-            await axios.post('http://localhost:5001/api/admin/publish', formData, {
+            await axios.post(`${API_BASE_URL}/api/admin/publish`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setPdfStatus({ msg: 'PDF published successfully!', type: 'success' });
@@ -124,7 +125,7 @@ const AdminPortal = () => {
         formData.append('file', codeFile);
 
         try {
-            await axios.post('http://localhost:5001/api/admin/publish', formData, {
+            await axios.post(`${API_BASE_URL}/api/admin/publish`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setCodeStatus({ msg: 'Code published successfully!', type: 'success' });

@@ -9,9 +9,10 @@ import HubContent from './components/HubContent';
 import Assets from './components/Assets';
 import SourceCode from './components/SourceCode';
 import AdminPortal from './components/AdminPortal';
+import { API_BASE_URL } from './config';
 import './App.css';
 
-const API_URL = 'http://localhost:5001/api/auth';
+const API_URL = `${API_BASE_URL}/api/auth`;
 
 const App = () => {
     const { user, login } = useAuth();
@@ -51,7 +52,7 @@ const App = () => {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = 'http://localhost:5001/auth/google';
+        window.location.href = `${API_BASE_URL}/auth/google`;
     };
 
     if (user) {

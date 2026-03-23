@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FileText, Download, Eye, ArrowLeft, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const Assets = () => {
     const navigate = useNavigate();
@@ -11,7 +12,7 @@ const Assets = () => {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        axios.get('http://localhost:5001/api/admin/contents')
+        axios.get(`${API_BASE_URL}/api/admin/contents`)
             .then(res => {
                 setPdfs(res.data.filter(item => item.type === 'pdf'));
                 setLoading(false);
@@ -76,12 +77,12 @@ const Assets = () => {
                         <p style={{ fontSize: '0.8rem', marginBottom: '1.5rem' }}>Published by <span style={{ color: '#fff' }}>{pdf.author || 'Admin'}</span></p>
                         
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <div className="hub-action" onClick={() => window.open(`http://localhost:5001${pdf.fileUrl}`, '_blank')}>
+                            <div className="hub-action" onClick={() => window.open(`${API_BASE_URL}${pdf.fileUrl}`, '_blank')}>
                                 <Eye size={16} /> View
                             </div>
                             <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = `http://localhost:5001${pdf.fileUrl}`;
+                                link.href = `${API_BASE_URL}${pdf.fileUrl}`;
                                 link.download = pdf.title || 'download';
                                 link.target = '_blank';
                                 link.click();
