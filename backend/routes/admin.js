@@ -4,14 +4,19 @@ const multer = require('multer');
 const path = require('path');
 const Content = require('../models/Content');
 const User = require('../models/User');
+const { GridFsStorage } = require('multer-gridfs-storage');
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const type = req.body.type === 'pdf' ? 'all data storage' : 'project data storage';
-        cb(null, `data/${type}`);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '_'));
+const storage = new GridFsStorage({
+    url: process.env.MONGODB_URI,
+    file: (req, file) => {
+        return new Promise((resolve) => {
+            const filename = Date.now() + '-' + file.originalname.replace(/\s+/g, '_');
+            const fileInfo = {
+                filename: filename,
+                bucketName: 'uploads'
+            };
+            resolve(fileInfo);
+        });
     }
 });
 
@@ -59,8 +64,8 @@ router.post('/publish', upload.single('file'), async (req, res) => {
             description,
             type,
             category,
-            fileUrl: `/data/${type === 'pdf' ? 'all%20data%20storage' : 'project%20data%20storage'}/${req.file.filename}`,
-            size: size || (req.file.size / (1024 * 1024)).toFixed(2) + ' MB',
+            fileUrl: `/api/contents/file/${req.file.filename}`,
+            size: size || (req.file.size ? (req.file.size / (1024 * 1024)).toFixed(2) + ' MB' : 'Unknown'),
             language,
             isFree: isFree === 'true' || isFree === true,
             price: Number(price) || 0
@@ -69,6 +74,7 @@ router.post('/publish', upload.single('file'), async (req, res) => {
         const savedContent = await newContent.save();
         res.status(201).json(savedContent);
     } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 
