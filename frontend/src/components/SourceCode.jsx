@@ -69,7 +69,7 @@ const SourceCode = () => {
                         <Code size={40} style={{ color: '#0ea5e9', marginBottom: '1.5rem' }} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                             <span style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', borderRadius: '20px', fontWeight: 600 }}>
-                                {project.lang}
+                                {project.language}
                             </span>
                             <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{project.size}</span>
                         </div>

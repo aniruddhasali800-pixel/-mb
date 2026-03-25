@@ -24,6 +24,24 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 app.use(express.json());
+
+// Database connection check middleware
+app.use((req, res, next) => {
+    // Allow listing and serving content even if DB is down (hybrid fallback handles it)
+    if (mongoose.connection.readyState !== 1 && req.path.startsWith('/api') && 
+        !req.path.startsWith('/api/admin/contents') && 
+        !req.path.startsWith('/api/admin/file/') &&
+        !req.path.startsWith('/api/admin/analytics') &&
+        !req.path.startsWith('/api/admin/publish') &&
+        !req.path.startsWith('/api/admin/content/')) {
+        return res.status(503).json({ 
+            message: 'Database is still connecting. Please wait a few seconds and refresh.',
+            status: 'connecting'
+        });
+    }
+    next();
+});
+
 app.use(express.static('public')); // For older file uploads
 app.use('/data', express.static('data')); // For new data storage
 app.use(session({
@@ -35,9 +53,34 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('Could not connect to MongoDB', err));
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+        });
+        console.log('✅ Connected to MongoDB Atlas');
+        app.set('mongoose_connected', true);
+        
+        // Initialize GridFS bucket
+        const conn = mongoose.connection;
+        const bucket = new mongoose.mongo.GridFSBucket(conn.db, {
+            bucketName: 'uploads'
+        });
+        app.set('gridfs', bucket); 
+        console.log('✅ GridFS Bucket initialized');
+
+        // Run auto-migration for existing local files
+        const { migrateExistingFiles } = require('./migrate_files_logic');
+        migrateExistingFiles(bucket).catch(err => console.error('Migration Error:', err));
+
+    } catch (err) {
+        console.error('❌ Could not connect to MongoDB', err.message);
+        app.set('mongoose_connected', false);
+    }
+};
+
+connectDB();
 
 // Passport Google Auth Strategy
 passport.use(new GoogleStrategy({
@@ -64,8 +107,12 @@ async (accessToken, refreshToken, profile, done) => {
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
-    const user = await User.findById(id);
-    done(null, user);
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
 });
 
 // Routes
@@ -80,11 +127,21 @@ app.get('/auth/google',
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
-        // Successful authentication
-        res.redirect('http://localhost:5000/?token=' + req.user.id);
+        // Successful authentication - Redirect to Frontend (Vite uses 5173 by default)
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/?token=${req.user.id}`);
     });
 
-const PORT = process.env.PORT || 5000;
+// Error Handler
+app.use((err, req, res, next) => {
+    console.error('GLOBAL ERROR:', err);
+    res.status(500).json({ 
+        message: err.message, 
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
+});
+
+const PORT = process.env.PORT || 5001; // Match .env
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 module.exports = app;
