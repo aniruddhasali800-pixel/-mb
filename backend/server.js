@@ -27,7 +27,6 @@ app.use(express.json());
 
 // Database connection check middleware
 app.use((req, res, next) => {
-    // Allow listing and serving content even if DB is down (hybrid fallback handles it)
     if (mongoose.connection.readyState !== 1 && req.path.startsWith('/api') && 
         !req.path.startsWith('/api/admin/contents') && 
         !req.path.startsWith('/api/admin/file/') &&
@@ -42,8 +41,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.static('public')); // For older file uploads
-app.use('/data', express.static('data')); // For new data storage
+app.use(express.static('public'));
+app.use('/data', express.static('data'));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
@@ -62,7 +61,6 @@ const connectDB = async () => {
         console.log('✅ Connected to MongoDB Atlas');
         app.set('mongoose_connected', true);
         
-        // Initialize GridFS bucket
         const conn = mongoose.connection;
         const bucket = new mongoose.mongo.GridFSBucket(conn.db, {
             bucketName: 'uploads'
@@ -70,7 +68,6 @@ const connectDB = async () => {
         app.set('gridfs', bucket); 
         console.log('✅ GridFS Bucket initialized');
 
-        // Run auto-migration for existing local files
         const { migrateExistingFiles } = require('./migrate_files_logic');
         migrateExistingFiles(bucket).catch(err => console.error('Migration Error:', err));
 
@@ -80,7 +77,11 @@ const connectDB = async () => {
     }
 };
 
-connectDB();
+if (!process.env.MONGODB_URI) {
+    console.warn('⚠️  MONGODB_URI is missing. Backend will operate in local-only mode.');
+} else {
+    connectDB();
+}
 
 // Passport Google Auth Strategy
 passport.use(new GoogleStrategy({
@@ -127,7 +128,6 @@ app.get('/auth/google',
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
-        // Successful authentication - Redirect to Frontend (Vite uses 5173 by default)
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/?token=${req.user.id}`);
     });
@@ -141,7 +141,9 @@ app.use((err, req, res, next) => {
     });
 });
 
-const PORT = process.env.PORT || 5001; // Match .env
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5001;
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
 
 module.exports = app;

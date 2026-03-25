@@ -5,7 +5,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import App from './App.jsx'
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_Z2VudWluZS1raWQtNDQuY2xlcmsuYWNjb3VudHMuZGV2JA'
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key")
