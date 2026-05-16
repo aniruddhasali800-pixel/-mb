@@ -103,7 +103,8 @@ const AdminPortal = () => {
             loadData();
             setTimeout(() => setPdfStatus({ msg: '', type: '' }), 3000);
         } catch (error) {
-            setPdfStatus({ msg: 'Failed to publish PDF.', type: 'error' });
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to publish PDF.';
+            setPdfStatus({ msg: `Error: ${errorMsg}`, type: 'error' });
             console.error(error);
         }
     };

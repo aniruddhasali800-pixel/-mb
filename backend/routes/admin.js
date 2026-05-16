@@ -7,7 +7,8 @@ const User = require('../models/User');
 const { createGridFSStorage, createDiskStorage, UPLOAD_DIRS } = require('../utils/storage');
 const fs = require('fs-extra');
 
-// Use Disk Storage for immediate availability (hybrid fallback serves it)
+// Always use Disk storage to fix the multer-gridfs-storage crash with newer MongoDB drivers.
+// The file is then asynchronously synced to GridFS.
 const storage = createDiskStorage();
 
 const upload = multer({ 
@@ -46,7 +47,7 @@ router.get('/analytics', async (req, res) => {
 
         // 2. Add local filesystem counts for files not in entries
         for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
-            if (await fs.exists(folderPath)) {
+            if (await fs.pathExists(folderPath)) {
                 const files = await fs.readdir(folderPath);
                 for (const filename of files) {
                     const stats = await fs.stat(path.join(folderPath, filename));
@@ -94,6 +95,18 @@ router.post('/publish', upload.single('file'), async (req, res) => {
 
         const fileUrl = `/api/admin/file/${req.file.filename}`;
         
+        // Sync to GridFS in the background if connected
+        if (req.app.get('mongoose_connected') !== false) {
+            const bucket = req.app.get('gridfs');
+            if (bucket) {
+                const fsStream = require('fs').createReadStream(req.file.path);
+                const uploadStream = bucket.openUploadStream(req.file.filename);
+                fsStream.pipe(uploadStream);
+                uploadStream.on('error', (err) => console.error('GridFS Sync Error:', err));
+                uploadStream.on('finish', () => console.log(`✅ GridFS Sync Complete: ${req.file.filename}`));
+            }
+        }
+
         const contentData = {
             title: title || req.file.filename,
             description,
@@ -127,10 +140,21 @@ router.post('/publish', upload.single('file'), async (req, res) => {
             console.error('⚠️ Failed to save local metadata sidecar:', metaErr.message);
         }
 
+        // --- NEW CONSOLE LOG REQUIREMENT ---
+        console.log('\n--- 📄 NEW FILE UPLOADED BY ADMIN ---');
+        console.log(JSON.stringify({
+            file: req.file.filename,
+            original: req.file.originalname,
+            mime: req.file.mimetype,
+            sizeBytes: req.file.size,
+            metadata: contentData
+        }, null, 2));
+        console.log('-------------------------------------\n');
+
         // Return success regardless, as the file is on disk and visible via hybrid listing
         res.status(201).json({
             ...contentData,
-            message: 'Content published successfully (Local storage)'
+            message: 'Content published successfully (Local storage & GridFS synced)'
         });
     } catch (err) {
         console.error('ADMIN PUBLISH ERROR:', err);
@@ -145,21 +169,25 @@ router.get('/file/:filename', async (req, res) => {
         const bucket = req.app.get('gridfs');
         
         // Try GridFS first
-        if (bucket) {
-            const files = await bucket.find({ filename }).toArray();
-            if (files && files.length > 0) {
-                const ext = path.extname(filename).toLowerCase();
-                if (ext === '.pdf') res.set('Content-Type', 'application/pdf');
-                else if (ext === '.zip') res.set('Content-Type', 'application/zip');
-                
-                return bucket.openDownloadStreamByName(filename).pipe(res);
+        if (bucket && req.app.get('mongoose_connected') !== false && require('mongoose').connection.readyState === 1) {
+            try {
+                const files = await bucket.find({ filename }).toArray();
+                if (files && files.length > 0) {
+                    const ext = path.extname(filename).toLowerCase();
+                    if (ext === '.pdf') res.set('Content-Type', 'application/pdf');
+                    else if (ext === '.zip') res.set('Content-Type', 'application/zip');
+                    
+                    return bucket.openDownloadStreamByName(filename).pipe(res);
+                }
+            } catch (gridErr) {
+                console.error('GridFS fetch failed, falling back to local storage:', gridErr);
             }
         }
 
         // Fallback: Try Local Filesystem
         for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
             const filePath = path.join(folderPath, filename);
-            if (await fs.exists(filePath)) {
+            if (await fs.pathExists(filePath)) {
                 const ext = path.extname(filename).toLowerCase();
                 if (ext === '.pdf') res.set('Content-Type', 'application/pdf');
                 else if (ext === '.zip') res.set('Content-Type', 'application/zip');
@@ -175,13 +203,78 @@ router.get('/file/:filename', async (req, res) => {
     }
 });
 
+// 1) API: Get all uploads done by Admin
+router.get('/all-uploads', async (req, res) => {
+    // Redirects to /contents which already fetches everything (DB + FS)
+    res.redirect('/api/admin/contents');
+});
+
+// 2) API: For users to see only available PDFs
+router.get('/user/pdfs', async (req, res) => {
+    try {
+        let contents = [];
+        
+        // 1. Get from MongoDB if connected
+        if (req.app.get('mongoose_connected') !== false && require('mongoose').connection.readyState === 1) {
+            try {
+                contents = await Content.find({ type: 'pdf' }).sort({ createdAt: -1 });
+            } catch (dbErr) {
+                console.error('DB Fetch Error for PDFs:', dbErr);
+            }
+        }
+
+        // 2. Scan Filesystem for local PDF files
+        const localFiles = [];
+        const pdfFolder = UPLOAD_DIRS.pdf;
+        if (await fs.pathExists(pdfFolder)) {
+            const files = await fs.readdir(pdfFolder);
+            for (const filename of files) {
+                const filePath = path.join(pdfFolder, filename);
+                const stats = await fs.stat(filePath);
+                if (stats.isDirectory() || filename.endsWith('.json')) continue;
+
+                const isAlreadyInDB = contents.some(c => c.fileUrl.endsWith(filename) || c.title === filename);
+                
+                if (!isAlreadyInDB) {
+                    let meta = {};
+                    try {
+                        const metaPath = filePath + '.json';
+                        if (await fs.pathExists(metaPath)) {
+                            meta = await fs.readJson(metaPath);
+                        }
+                    } catch (e) {}
+
+                    localFiles.push({
+                        _id: `fs-${filename}`,
+                        title: meta.title || filename.split('-').slice(1).join('-').replace(/\.pdf$/, '').replace(/_/g, ' ') || filename,
+                        description: meta.description || `Local PDF: ${filename}`,
+                        type: 'pdf',
+                        category: meta.category || 'General Notes',
+                        fileUrl: `/api/admin/file/${filename}`,
+                        size: meta.size || ((stats.size / (1024 * 1024)).toFixed(2) + ' MB'),
+                        author: meta.author || 'System',
+                        price: meta.price || 0,
+                        isFree: meta.isFree !== undefined ? meta.isFree : true,
+                        createdAt: meta.createdAt || stats.birthtime
+                    });
+                }
+            }
+        }
+
+        res.json([...contents, ...localFiles]);
+    } catch (err) {
+        console.error('USER PDFS ERROR:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Get All Content for Admin Dashboard (Hybrid: DB + Filesystem)
 router.get('/contents', async (req, res) => {
     try {
         let contents = [];
         
         // 1. Try to get from MongoDB if connected
-        if (req.app.get('mongoose_connected') !== false) {
+        if (req.app.get('mongoose_connected') !== false && require('mongoose').connection.readyState === 1) {
             try {
                 contents = await Content.find().sort({ createdAt: -1 });
             } catch (dbErr) {
@@ -192,7 +285,7 @@ router.get('/contents', async (req, res) => {
         // 2. Scan Filesystem for local files
         const localFiles = [];
         for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
-            if (await fs.exists(folderPath)) {
+            if (await fs.pathExists(folderPath)) {
                 const files = await fs.readdir(folderPath);
                 for (const filename of files) {
                     const filePath = path.join(folderPath, filename);
@@ -207,7 +300,7 @@ router.get('/contents', async (req, res) => {
                         let meta = {};
                         try {
                             const metaPath = filePath + '.json';
-                            if (await fs.exists(metaPath)) {
+                            if (await fs.pathExists(metaPath)) {
                                 meta = await fs.readJson(metaPath);
                             }
                         } catch (e) {}
@@ -249,11 +342,11 @@ router.delete('/content/:id', async (req, res) => {
 
             for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
                 const filePath = path.join(folderPath, filename);
-                if (await fs.exists(filePath)) {
+                if (await fs.pathExists(filePath)) {
                     await fs.remove(filePath);
                     // Also remove sidecar metadata if exists
                     const metaPath = filePath + '.json';
-                    if (await fs.exists(metaPath)) await fs.remove(metaPath);
+                    if (await fs.pathExists(metaPath)) await fs.remove(metaPath);
                     deleted = true;
                 }
             }
@@ -280,10 +373,10 @@ router.delete('/content/:id', async (req, res) => {
             // Also try to delete local file if it exists (for hybrid dual storage)
             for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
                 const filePath = path.join(folderPath, filename);
-                if (await fs.exists(filePath)) {
+                if (await fs.pathExists(filePath)) {
                     await fs.remove(filePath);
                     const metaPath = filePath + '.json';
-                    if (await fs.exists(metaPath)) await fs.remove(metaPath);
+                    if (await fs.pathExists(metaPath)) await fs.remove(metaPath);
                 }
             }
         }

@@ -20,7 +20,7 @@ async function migrateExistingFiles(bucket) {
 }
 
 async function migrateFolder(folderPath, type, bucket) {
-    if (!await fs.exists(folderPath)) return;
+    if (!await fs.pathExists(folderPath)) return;
     
     const files = await fs.readdir(folderPath);
     for (const filename of files) {
@@ -45,7 +45,7 @@ async function migrateFolder(folderPath, type, bucket) {
         let meta = {};
         try {
             const metaPath = filePath + '.json';
-            if (await fs.exists(metaPath)) {
+            if (await fs.pathExists(metaPath)) {
                 meta = await fs.readJson(metaPath);
             }
         } catch (e) {}

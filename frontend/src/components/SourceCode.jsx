@@ -10,6 +10,7 @@ const SourceCode = () => {
     
     const [projects, setProjects] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [search, setSearch] = React.useState('');
 
     React.useEffect(() => {
         axios.get(`${API_BASE_URL}/api/admin/contents`)
@@ -47,6 +48,8 @@ const SourceCode = () => {
                     <input 
                         type="text" 
                         placeholder="Search for projects, languages, or repos..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         style={{ paddingLeft: '45px' }}
                     />
                     <Terminal size={18} style={{ position: 'absolute', left: '15px', top: '14px', color: '#94a3b8' }} />
@@ -56,9 +59,15 @@ const SourceCode = () => {
             <div className="dashboard-container" style={{ marginTop: '0' }}>
                 {loading ? (
                     <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>Loading...</p>
-                ) : projects.length === 0 ? (
-                    <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>No projects available right now.</p>
-                ) : projects.map((project, index) => (
+                ) : projects.filter(p => {
+                    const q = search.toLowerCase();
+                    return !q || p.title?.toLowerCase().includes(q) || p.language?.toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q);
+                }).length === 0 ? (
+                    <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>{search ? 'No results found.' : 'No projects available right now.'}</p>
+                ) : projects.filter(p => {
+                    const q = search.toLowerCase();
+                    return !q || p.title?.toLowerCase().includes(q) || p.language?.toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q);
+                }).map((project, index) => (
                     <motion.div 
                         key={project._id}
                         initial={{ opacity: 0, scale: 0.9 }}

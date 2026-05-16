@@ -5,8 +5,8 @@ const path = require('path');
 const fs = require('fs-extra');
 
 const UPLOAD_DIRS = {
-    pdf: path.join(__dirname, '../data/all data storage'),
-    code: path.join(__dirname, '../data/project data storage')
+    pdf: path.resolve(process.cwd(), 'data/all data storage'),
+    code: path.resolve(process.cwd(), 'data/project data storage')
 };
 
 const ensureDirs = async () => {

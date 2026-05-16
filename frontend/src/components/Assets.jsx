@@ -10,6 +10,7 @@ const Assets = () => {
     
     const [pdfs, setPdfs] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [search, setSearch] = React.useState('');
 
     React.useEffect(() => {
         axios.get(`${API_BASE_URL}/api/admin/contents`)
@@ -47,6 +48,8 @@ const Assets = () => {
                     <input 
                         type="text" 
                         placeholder="Search for PDFs, books, or notes..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         style={{ paddingLeft: '45px' }}
                     />
                     <Search size={18} style={{ position: 'absolute', left: '15px', top: '14px', color: '#94a3b8' }} />
@@ -56,9 +59,15 @@ const Assets = () => {
             <div className="dashboard-container" style={{ marginTop: '0' }}>
                 {loading ? (
                     <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>Loading...</p>
-                ) : pdfs.length === 0 ? (
-                    <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>No PDFs available right now.</p>
-                ) : pdfs.map((pdf, index) => (
+                ) : pdfs.filter(p => {
+                    const q = search.toLowerCase();
+                    return !q || p.title?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q);
+                }).length === 0 ? (
+                    <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>{search ? 'No results found.' : 'No PDFs available right now.'}</p>
+                ) : pdfs.filter(p => {
+                    const q = search.toLowerCase();
+                    return !q || p.title?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q);
+                }).map((pdf, index) => (
                     <motion.div 
                         key={pdf._id}
                         initial={{ opacity: 0, scale: 0.9 }}
