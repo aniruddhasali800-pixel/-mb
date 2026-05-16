@@ -9,6 +9,8 @@ const UPLOAD_DIRS = {
 
 async function migrateExistingFiles(bucket) {
     console.log('🔄 Starting auto-migration for local files...');
+    console.log(`📂 PDF Folder: ${UPLOAD_DIRS.pdf}`);
+    console.log(`📂 Code Folder: ${UPLOAD_DIRS.code}`);
     
     // Migrate PDFs
     await migrateFolder(UPLOAD_DIRS.pdf, 'pdf', bucket);
