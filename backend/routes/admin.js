@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const Content = require('../models/Content');
 const User = require('../models/User');
+const Purchase = require('../models/Purchase');
 const { createGridFSStorage, createDiskStorage, UPLOAD_DIRS } = require('../utils/storage');
 const fs = require('fs-extra');
 
@@ -138,10 +140,48 @@ router.post('/publish', upload.single('file'), async (req, res) => {
     }
 });
 
+// Generate Download Token
+router.post('/content/generate-token', async (req, res) => {
+    try {
+        const { contentId, userId } = req.body;
+        const content = await Content.findById(contentId);
+        if (!content) return res.status(404).json({ message: 'Content not found' });
+
+        if (!content.isFree) {
+            if (!userId) return res.status(403).json({ message: 'Authentication required' });
+            const purchase = await Purchase.findOne({ userId, contentId: content._id, status: 'completed' });
+            if (!purchase) return res.status(402).json({ message: 'Payment required' });
+        }
+
+        const token = jwt.sign(
+            { contentId, filename: content.fileUrl.split('/').pop() },
+            process.env.JWT_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        res.json({ token });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Serve File from GridFS with local fallback
 router.get('/file/:filename', async (req, res) => {
     try {
         const filename = req.params.filename;
+        const token = req.query.token;
+
+        if (!token) return res.status(401).json({ message: 'Download token required' });
+
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.filename !== filename) {
+                return res.status(403).json({ message: 'Invalid token for this file' });
+            }
+        } catch (err) {
+            return res.status(401).json({ message: 'Invalid or expired token' });
+        }
+
         const bucket = req.app.get('gridfs');
         
         // Try GridFS first
@@ -178,12 +218,26 @@ router.get('/file/:filename', async (req, res) => {
 // Get All Content for Admin Dashboard (Hybrid: DB + Filesystem)
 router.get('/contents', async (req, res) => {
     try {
+        const userId = req.query.userId;
         let contents = [];
         
         // 1. Try to get from MongoDB if connected
         if (req.app.get('mongoose_connected') !== false) {
             try {
-                contents = await Content.find().sort({ createdAt: -1 });
+                let dbContents = await Content.find().sort({ createdAt: -1 }).lean();
+
+                // If userId is provided, check which items are purchased
+                if (userId) {
+                    const purchases = await Purchase.find({ userId, status: 'completed' });
+                    const purchasedIds = purchases.map(p => p.contentId.toString());
+
+                    dbContents = dbContents.map(c => ({
+                        ...c,
+                        isPurchased: purchasedIds.includes(c._id.toString())
+                    }));
+                }
+
+                contents = dbContents;
             } catch (dbErr) {
                 console.error('DB Fetch Error, falling back to FS only:', dbErr);
             }
