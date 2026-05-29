@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, Eye, ArrowLeft, Search } from 'lucide-react';
+import { FileText, Download, Eye, ArrowLeft, Search, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -13,7 +13,8 @@ const Assets = () => {
     const [search, setSearch] = React.useState('');
 
     React.useEffect(() => {
-        axios.get(`${API_BASE_URL}/api/admin/contents`)
+        const userId = user?.id || '';
+        axios.get(`${API_BASE_URL}/api/admin/contents?userId=${userId}`)
             .then(res => {
                 setPdfs(res.data.filter(item => item.type === 'pdf'));
                 setLoading(false);
@@ -22,7 +23,37 @@ const Assets = () => {
                 console.error(err);
                 setLoading(false);
             });
-    }, []);
+    }, [user]);
+
+    const handlePayment = async (contentId) => {
+        try {
+            const res = await axios.post(`${API_BASE_URL}/api/payment/create-checkout-session`, {
+                contentId,
+                userId: user?.id
+            });
+            if (res.data.url) {
+                window.location.href = res.data.url;
+            }
+        } catch (error) {
+            console.error('Payment failed', error);
+            alert('Failed to initiate payment. Please try again.');
+        }
+    };
+
+    const handleDownload = async (pdf) => {
+        try {
+            const res = await axios.post(`${API_BASE_URL}/api/admin/content/generate-token`, {
+                contentId: pdf._id,
+                userId: user?.id
+            });
+            const { token } = res.data;
+            const downloadUrl = `${API_BASE_URL}${pdf.fileUrl}?token=${token}`;
+            window.open(downloadUrl, '_blank');
+        } catch (error) {
+            console.error('Download failed', error);
+            alert('Failed to access file. Please ensure you have purchased it.');
+        }
+    };
 
     return (
         <div className="bg-shapes" style={{ minHeight: '100vh', padding: '100px 5% 50px' }}>
@@ -86,18 +117,20 @@ const Assets = () => {
                         <p style={{ fontSize: '0.8rem', marginBottom: '1.5rem' }}>Published by <span style={{ color: '#fff' }}>{pdf.author || 'Admin'}</span></p>
                         
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <div className="hub-action" onClick={() => window.open(`${API_BASE_URL}${pdf.fileUrl}`, '_blank')}>
-                                <Eye size={16} /> View
-                            </div>
-                            <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = `${API_BASE_URL}${pdf.fileUrl}`;
-                                link.download = pdf.title || 'download';
-                                link.target = '_blank';
-                                link.click();
-                            }}>
-                                <Download size={16} /> Download
-                            </div>
+                            {pdf.isFree || pdf.isPurchased ? (
+                                <>
+                                    <div className="hub-action" onClick={() => handleDownload(pdf)}>
+                                        <Eye size={16} /> View
+                                    </div>
+                                    <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => handleDownload(pdf)}>
+                                        <Download size={16} /> Download
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="hub-action" style={{ background: '#10b981', color: 'white' }} onClick={() => handlePayment(pdf._id)}>
+                                    <CreditCard size={16} /> Buy for ${pdf.price}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 ))}

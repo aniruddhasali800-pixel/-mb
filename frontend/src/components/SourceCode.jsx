@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Code, Download, Eye, ArrowLeft, Search, Terminal } from 'lucide-react';
+import { Code, Download, Eye, ArrowLeft, Search, Terminal, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -13,7 +13,8 @@ const SourceCode = () => {
     const [search, setSearch] = React.useState('');
 
     React.useEffect(() => {
-        axios.get(`${API_BASE_URL}/api/admin/contents`)
+        const userId = user?.id || '';
+        axios.get(`${API_BASE_URL}/api/admin/contents?userId=${userId}`)
             .then(res => {
                 setProjects(res.data.filter(item => item.type === 'code'));
                 setLoading(false);
@@ -22,7 +23,37 @@ const SourceCode = () => {
                 console.error(err);
                 setLoading(false);
             });
-    }, []);
+    }, [user]);
+
+    const handlePayment = async (contentId) => {
+        try {
+            const res = await axios.post(`${API_BASE_URL}/api/payment/create-checkout-session`, {
+                contentId,
+                userId: user?.id
+            });
+            if (res.data.url) {
+                window.location.href = res.data.url;
+            }
+        } catch (error) {
+            console.error('Payment failed', error);
+            alert('Failed to initiate payment. Please try again.');
+        }
+    };
+
+    const handleDownload = async (project) => {
+        try {
+            const res = await axios.post(`${API_BASE_URL}/api/admin/content/generate-token`, {
+                contentId: project._id,
+                userId: user?.id
+            });
+            const { token } = res.data;
+            const downloadUrl = `${API_BASE_URL}${project.fileUrl}?token=${token}`;
+            window.open(downloadUrl, '_blank');
+        } catch (error) {
+            console.error('Download failed', error);
+            alert('Failed to access file. Please ensure you have purchased it.');
+        }
+    };
 
     return (
         <div className="bg-shapes" style={{ minHeight: '100vh', padding: '100px 5% 50px' }}>
@@ -86,18 +117,20 @@ const SourceCode = () => {
                         <p style={{ fontSize: '0.8rem', marginBottom: '1.5rem' }}>Repository by <span style={{ color: '#fff' }}>{project.author || 'Admin'}</span></p>
                         
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <div className="hub-action" style={{ color: '#0ea5e9' }} onClick={() => window.open(`${API_BASE_URL}${project.fileUrl}`, '_blank')}>
-                                <Eye size={16} /> View
-                            </div>
-                            <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = `${API_BASE_URL}${project.fileUrl}`;
-                                link.download = project.title || 'download';
-                                link.target = '_blank';
-                                link.click();
-                            }}>
-                                <Download size={16} /> Download
-                            </div>
+                            {project.isFree || project.isPurchased ? (
+                                <>
+                                    <div className="hub-action" style={{ color: '#0ea5e9' }} onClick={() => handleDownload(project)}>
+                                        <Eye size={16} /> View
+                                    </div>
+                                    <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => handleDownload(project)}>
+                                        <Download size={16} /> Download
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="hub-action" style={{ background: '#10b981', color: 'white' }} onClick={() => handlePayment(project._id)}>
+                                    <CreditCard size={16} /> Buy for ${project.price}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 ))}

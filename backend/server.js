@@ -12,6 +12,7 @@ const app = express();
 
 const adminRoutes = require('./routes/admin');
 const contactRoutes = require('./routes/contact');
+const paymentRoutes = require('./routes/payment');
 const { ensureDirs } = require('./utils/storage');
 
 // Initialize directories
@@ -30,6 +31,10 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
+
+// Stripe webhook needs raw body
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
 // Database connection check middleware
@@ -155,6 +160,7 @@ passport.deserializeUser(async (id, done) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Google Auth Routes
 app.get('/auth/google',
