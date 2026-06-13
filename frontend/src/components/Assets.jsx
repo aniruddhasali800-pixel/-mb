@@ -58,7 +58,21 @@ const Assets = () => {
 
             <div className="dashboard-container" style={{ marginTop: '0' }}>
                 {loading ? (
-                    <p style={{ color: 'var(--text-gray)', textAlign: 'center', width: '100%' }}>Loading...</p>
+                    Array(6).fill(0).map((_, index) => (
+                        <div key={index} className="hub-card">
+                            <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '8px', marginBottom: '1.5rem' }}></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                <div className="skeleton" style={{ width: '60px', height: '24px', borderRadius: '20px' }}></div>
+                                <div className="skeleton" style={{ width: '40px', height: '16px' }}></div>
+                            </div>
+                            <div className="skeleton" style={{ width: '80%', height: '20px', marginBottom: '0.5rem' }}></div>
+                            <div className="skeleton" style={{ width: '50%', height: '16px', marginBottom: '1.5rem' }}></div>
+                            <div style={{ display: 'flex', gap: '15px' }}>
+                                <div className="skeleton" style={{ width: '60px', height: '20px' }}></div>
+                                <div className="skeleton" style={{ width: '80px', height: '20px' }}></div>
+                            </div>
+                        </div>
+                    ))
                 ) : pdfs.filter(p => {
                     const q = search.toLowerCase();
                     return !q || p.title?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || (p.author || '').toLowerCase().includes(q);
