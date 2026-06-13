@@ -7,6 +7,7 @@ import HubContent from './components/HubContent';
 import Assets from './components/Assets';
 import SourceCode from './components/SourceCode';
 import AdminPortal from './components/AdminPortal';
+import Posts from './components/Posts';
 import './App.css';
 
 const App = () => {
@@ -32,6 +33,7 @@ const App = () => {
                     } />
                     <Route path="/assets" element={<Assets />} />
                     <Route path="/source-code" element={<SourceCode />} />
+                    <Route path="/posts" element={<Posts />} />
                     <Route path="/admin" element={<AdminPortal />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

@@ -19,6 +19,13 @@ const HubContent = () => {
             desc: "Explore source code repositories, technical implementations, and collaborative project files.",
             action: "Source Code",
             path: "/source-code"
+        },
+        {
+            title: "Community Discussions",
+            icon: <FileText size={40} />,
+            desc: "Join the community, read Reddit-style posts, and discuss technical topics.",
+            action: "View Posts",
+            path: "/posts"
         }
     ];
 
