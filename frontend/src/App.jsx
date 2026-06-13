@@ -32,7 +32,7 @@ const App = () => {
                     } />
                     <Route path="/assets" element={<Assets />} />
                     <Route path="/source-code" element={<SourceCode />} />
-                    <Route path="/admin-portal-xyz" element={<AdminPortal />} />
+                    <Route path="/admin" element={<AdminPortal />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </SignedIn>

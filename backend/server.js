@@ -21,7 +21,7 @@ ensureDirs();
 const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
 app.use(cors({
     origin: function(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('true') || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://192.168.')) {
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('true') || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://192.168.') || origin === 'https://mb-nine-brown.vercel.app') {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -155,6 +155,8 @@ passport.deserializeUser(async (id, done) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
 
 // Google Auth Routes
 app.get('/auth/google',
