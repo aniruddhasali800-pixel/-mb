@@ -33,7 +33,25 @@ router.get('/analytics', async (req, res) => {
         // 1. Get stats from MongoDB if connected
         if (req.app.get('mongoose_connected') !== false) {
             try {
-                totalUsers = await User.countDocuments();
+                if (process.env.CLERK_SECRET_KEY) {
+                    try {
+                        // Native fetch (Node 18+)
+                        const clerkRes = await fetch('https://api.clerk.com/v1/users/count', {
+                            headers: { 'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}` }
+                        });
+                        if (clerkRes.ok) {
+                            const data = await clerkRes.json();
+                            totalUsers = data.total_count || 0;
+                        } else {
+                            totalUsers = await User.countDocuments();
+                        }
+                    } catch (clerkErr) {
+                        totalUsers = await User.countDocuments();
+                    }
+                } else {
+                    totalUsers = await User.countDocuments();
+                }
+
                 pdfCount = await Content.countDocuments({ type: 'pdf' });
                 codeCount = await Content.countDocuments({ type: 'code' });
                 const viewsResult = await Content.aggregate([
@@ -402,6 +420,41 @@ router.put('/content/:id/price', async (req, res) => {
         res.json(updatedContent);
     } catch (err) {
         console.error('ADMIN UPDATE PRICE ERROR:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Increment View Count
+router.put('/content/:id/view', async (req, res) => {
+    try {
+        const id = req.params.id;
+        
+        // Handle local files
+        if (id.startsWith('fs-')) {
+            const filename = id.replace('fs-', '');
+            let updated = false;
+            for (const [type, folderPath] of Object.entries(UPLOAD_DIRS)) {
+                const metaPath = path.join(folderPath, filename + '.json');
+                if (await fs.pathExists(metaPath)) {
+                    const meta = await fs.readJson(metaPath);
+                    meta.views = (meta.views || 0) + 1;
+                    await fs.writeJson(metaPath, meta);
+                    updated = true;
+                    return res.json(meta);
+                }
+            }
+            if (!updated) return res.status(404).json({ message: 'Local file metadata not found' });
+        }
+
+        const updatedContent = await Content.findByIdAndUpdate(
+            id,
+            { $inc: { views: 1 } },
+            { new: true }
+        );
+        if (!updatedContent) return res.status(404).json({ message: 'Content not found' });
+        res.json(updatedContent);
+    } catch (err) {
+        console.error('ADMIN INCREMENT VIEW ERROR:', err);
         res.status(500).json({ message: err.message });
     }
 });

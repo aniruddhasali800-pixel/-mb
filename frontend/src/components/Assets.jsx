@@ -86,10 +86,14 @@ const Assets = () => {
                         <p style={{ fontSize: '0.8rem', marginBottom: '1.5rem' }}>Published by <span style={{ color: '#fff' }}>{pdf.author || 'Admin'}</span></p>
                         
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <div className="hub-action" onClick={() => window.open(`${API_BASE_URL}${pdf.fileUrl}`, '_blank')}>
+                            <div className="hub-action" onClick={() => {
+                                axios.put(`${API_BASE_URL}/api/admin/content/${pdf._id}/view`).catch(err => console.error(err));
+                                window.open(`${API_BASE_URL}${pdf.fileUrl}`, '_blank');
+                            }}>
                                 <Eye size={16} /> View
                             </div>
                             <div className="hub-action" style={{ color: '#94a3b8' }} onClick={() => {
+                                axios.put(`${API_BASE_URL}/api/admin/content/${pdf._id}/view`).catch(err => console.error(err));
                                 const link = document.createElement('a');
                                 link.href = `${API_BASE_URL}${pdf.fileUrl}`;
                                 link.download = pdf.title || 'download';
