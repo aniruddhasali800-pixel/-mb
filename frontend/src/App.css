@@ -360,3 +360,351 @@ button {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* =========================================================
+   Responsive Utility Classes & Media Queries
+   ========================================================= */
+
+.page-container {
+    min-height: 100vh;
+    padding: 100px 5% 50px;
+}
+
+.page-title {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 4rem auto;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Desktop Navigation Links */
+.nav-links-desktop {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-gray);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link-item:hover {
+    color: white;
+    background: var(--glass-bg);
+}
+
+.nav-link-item.active {
+    color: white;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid var(--glass-border);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Mobile Drawer Overlay */
+.mobile-drawer {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    z-index: 999;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-drawer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mobile-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-gray);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.mobile-drawer-link:hover {
+    color: white;
+    background: var(--glass-bg);
+}
+
+.mobile-drawer-link.active {
+    color: white;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid var(--glass-border);
+}
+
+/* Discussions Card Styles */
+.post-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.75rem;
+    border-radius: 20px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.post-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.post-votes-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 40px;
+    user-select: none;
+}
+
+.vote-btn {
+    cursor: pointer;
+    color: var(--text-gray);
+    transition: color 0.2s ease, transform 0.1s active;
+}
+
+.vote-btn:hover {
+    color: white;
+}
+
+.vote-count {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.post-main-content {
+    flex: 1;
+}
+
+.post-meta {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+}
+
+.post-author {
+    color: white;
+    font-weight: 500;
+}
+
+.post-title-link {
+    font-size: 1.3rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: white;
+    font-weight: 600;
+}
+
+.post-text {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.post-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.post-action-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.post-action-item:hover {
+    color: white;
+}
+
+/* Responsive Table styling for Admin Portal */
+.admin-table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    margin-top: 1.5rem;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+    text-align: left;
+}
+
+.admin-table th {
+    padding: 1.25rem 1rem;
+    color: var(--text-gray);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.admin-table td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Media Queries for Mobile and Tablets */
+@media screen and (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .page-container {
+        padding: 80px 4% 30px;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .upload-grid {
+        grid-template-columns: 1fr;
+        margin: 2rem auto;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
+        margin-top: 60px;
+    }
+
+    .auth-card, .hub-card {
+        padding: 1.5rem;
+    }
+
+    .hub-card h2 {
+        font-size: 1.3rem;
+    }
+    
+    .nav-brand {
+        font-size: 1.2rem;
+    }
+
+    /* Navbar overrides on mobile */
+    .nav-links-desktop {
+        display: none;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    /* Discussion Cards on mobile */
+    .post-card {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .post-votes-sidebar {
+        flex-direction: row;
+        width: 100%;
+        justify-content: flex-start;
+        gap: 15px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .post-votes-sidebar .vote-btn {
+        padding: 4px;
+    }
+
+    /* Tables on Mobile */
+    .admin-table th, .admin-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+    }
+}

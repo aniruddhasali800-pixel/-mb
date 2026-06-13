@@ -141,14 +141,14 @@ const AdminPortal = () => {
     };
 
     return (
-        <div className="bg-shapes" style={{ minHeight: '100vh', padding: '100px 5% 50px' }}>
+        <div className="bg-shapes page-container">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                <h1 style={{ fontSize: '3.5rem', marginBottom: '0.5rem' }}>Admin Control Center</h1>
+                <h1 className="page-title">Admin Control Center</h1>
                 <p className="subtitle">Monitor platform growth and manage all published assets.</p>
             </motion.div>
 
             {/* Stats Grid */}
-            <div className="dashboard-container" style={{ marginTop: '0', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="dashboard-container stats-grid" style={{ marginTop: '0' }}>
                 <StatCard icon={<Users />} label="Total Students" value={stats.students} trend="+12%" />
                 <StatCard icon={<Eye />} label="Total Views" value={stats.views} trend="+24%" />
                 <StatCard icon={<FileText />} label="Total PDFs/Notes" value={stats.pdfCount} trend="Active" />
@@ -156,7 +156,7 @@ const AdminPortal = () => {
             </div>
 
             {/* Dual Publishing Section */}
-            <div style={{ maxWidth: '1200px', margin: '4rem auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div className="upload-grid">
                 
                 {/* PDF Upload Form */}
                 <div className="hub-card" style={{ padding: '2rem' }}>
@@ -177,7 +177,7 @@ const AdminPortal = () => {
                             <label>File (PDF only)</label>
                             <input type="file" accept=".pdf" onChange={(e) => setPdfFile(e.target.files[0])} style={{ background: 'rgba(255,255,255,0.03)' }} required />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                        <div className="form-grid-2" style={{ marginTop: '1rem' }}>
                             <div className="form-group">
                                 <label>Pricing Status</label>
                                 <select 
@@ -237,7 +237,7 @@ const AdminPortal = () => {
                             <label>Project Title</label>
                             <input type="text" value={codeData.title} onChange={(e) => setCodeData({...codeData, title: e.target.value})} placeholder="e.g. E-Commerce Backend" required />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-grid-2">
                             <div className="form-group">
                                 <label>Category</label>
                                 <input type="text" value={codeData.category} onChange={(e) => setCodeData({...codeData, category: e.target.value})} placeholder="e.g. Full Stack App" required />
@@ -281,23 +281,23 @@ const AdminPortal = () => {
                 <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <CheckCircle size={24} color="#10b981" /> Uploaded Assets & Revenue Tracking
                 </h2>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', color: 'white' }}>
+                <div className="admin-table-container">
+                    <table className="admin-table">
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Title</th>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Type / Category</th>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Traffic (Views)</th>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Price</th>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Implied Revenue</th>
-                                <th style={{ padding: '1rem', color: 'var(--text-gray)' }}>Actions</th>
+                                <th>Title</th>
+                                <th>Type / Category</th>
+                                <th>Traffic (Views)</th>
+                                <th>Price</th>
+                                <th>Implied Revenue</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {contents.map((item) => (
-                                <tr key={item._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <td style={{ padding: '1rem' }}><strong>{item.title}</strong></td>
-                                    <td style={{ padding: '1rem' }}>
+                                <tr key={item._id}>
+                                    <td><strong>{item.title}</strong></td>
+                                    <td>
                                         <span style={{ 
                                             background: item.type === 'pdf' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(14, 165, 233, 0.2)', 
                                             padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', marginRight: '8px'
@@ -306,17 +306,17 @@ const AdminPortal = () => {
                                         </span>
                                         <span style={{ fontSize: '0.9rem', color: 'var(--text-gray)' }}>{item.category}</span>
                                     </td>
-                                    <td style={{ padding: '1rem' }}>
+                                    <td>
                                         <Eye size={14} style={{ marginRight: '5px', verticalAlign: 'middle', color: '#94a3b8' }}/> 
                                         {item.views || 0}
                                     </td>
-                                    <td style={{ padding: '1rem' }}>
+                                    <td>
                                         {item.isFree ? <span style={{ color: '#10b981' }}>Free</span> : <span>${item.price}</span>}
                                     </td>
-                                    <td style={{ padding: '1rem', color: '#10b981', fontWeight: 600 }}>
+                                    <td style={{ color: '#10b981', fontWeight: 600 }}>
                                         ${(item.views || 0) * (item.price || 0)}
                                     </td>
-                                    <td style={{ padding: '1rem', display: 'flex', gap: '10px' }}>
+                                    <td style={{ display: 'flex', gap: '10px' }}>
                                         <button onClick={() => handleUpdatePrice(item._id, item.price)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '6px 12px', borderRadius: '6px', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Set Price</button>
                                         <button onClick={() => handleDelete(item._id)} style={{ background: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '6px', color: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
                                     </td>

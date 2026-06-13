@@ -25,7 +25,7 @@ const SourceCode = () => {
     }, []);
 
     return (
-        <div className="bg-shapes" style={{ minHeight: '100vh', padding: '100px 5% 50px' }}>
+        <div className="bg-shapes page-container">
             <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -41,7 +41,7 @@ const SourceCode = () => {
                 animate={{ opacity: 1, y: 0 }}
                 style={{ textAlign: 'center', marginBottom: '3rem' }}
             >
-                <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Source Code</h1>
+                <h1 className="page-title">Source Code</h1>
                 <p className="subtitle">Download and explore complete source codes for various software projects.</p>
                 
                 <div style={{ maxWidth: '600px', margin: '2rem auto', position: 'relative' }}>
