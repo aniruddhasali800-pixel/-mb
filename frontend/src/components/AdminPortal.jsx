@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { UploadCloud, FileText, Code, Server, Shield, Activity, Users, FileDigit, Globe, Trash2, DollarSign, Eye, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import AdBanner from './AdBanner';
 
 const AdminPortal = () => {
     const [stats, setStats] = useState({ students: 0, views: 0, pdfCount: 0, codeCount: 0, traffic: 'Low' });
@@ -142,6 +143,7 @@ const AdminPortal = () => {
 
     return (
         <div className="bg-shapes page-container">
+            <AdBanner />
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '4rem' }}>
                 <h1 className="page-title">Admin Control Center</h1>
                 <p className="subtitle">Monitor platform growth and manage all published assets.</p>

@@ -4,6 +4,7 @@ import { ArrowLeft, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import AdBanner from './AdBanner';
 
 const Posts = () => {
     const navigate = useNavigate();
@@ -24,6 +25,7 @@ const Posts = () => {
 
     return (
         <div className="bg-shapes" style={{ minHeight: '100vh', padding: '100px 5% 50px' }}>
+            <AdBanner />
             <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

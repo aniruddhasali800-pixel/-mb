@@ -8,6 +8,7 @@ import Assets from './components/Assets';
 import SourceCode from './components/SourceCode';
 import AdminPortal from './components/AdminPortal';
 import Posts from './components/Posts';
+import AdBanner from './components/AdBanner';
 import './App.css';
 
 const App = () => {
@@ -15,6 +16,7 @@ const App = () => {
 
     return (
         <div className="bg-shapes">
+            <AdBanner />
             <SignedIn>
                 <Navbar />
                 <Routes>
@@ -40,6 +42,7 @@ const App = () => {
             </SignedIn>
 
             <SignedOut>
+                <AdBanner />
                 <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <SignIn />
                 </div>
